@@ -1,0 +1,269 @@
+// ======================================================
+// NOMMI - Prisma Schema
+// ======================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ======================================================
+// USERS
+// ======================================================
+model users {
+  idUser             Int             @id @default(autoincrement())
+  userFirstName      String
+  userSecondName     String?
+  userLastName       String
+  userSecondLastName String?
+  userUsername       String          @unique
+  userEmail          String          @unique
+  userPassword       String
+  userRole           String          @default("user")
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  favorites          favorites[]
+  history            history[]
+  userAppliances     userAppliances[]
+  reviews            reviews[]
+}
+
+// ======================================================
+// CATEGORIES
+// ======================================================
+model categories {
+  idCategory   Int       @id @default(autoincrement())
+  categoryName String    @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  recipes      recipes[]
+}
+
+// ======================================================
+// CUISINES
+// ======================================================
+model cuisines {
+  idCuisine   Int       @id @default(autoincrement())
+  cuisineName String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  recipes     recipes[]
+}
+
+// ======================================================
+// RECIPES
+// ======================================================
+model recipes {
+  idRecipe          Int               @id @default(autoincrement())
+  recipeTitle       String
+  recipeDescription String?
+  recipePrepTime    Int?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  idCategory        Int?              
+  idCuisine         Int?              
+
+  category          categories?       @relation(fields: [idCategory], references: [idCategory])
+  cuisine           cuisines?         @relation(fields: [idCuisine], references: [idCuisine])
+
+  recipeSteps       recipeSteps[]
+  recipeIngredients recipeIngredients[]
+  recipeAppliances  recipeAppliances[]
+  recipeTags        recipeTags[]
+  recipeMedia       recipeMedia[]
+  favorites         favorites[]
+  history           history[]
+  reviews           reviews[]
+}
+
+// ======================================================
+// RECIPE STEPS
+// ======================================================
+model recipeSteps {
+  idRecipeStep          Int       @id @default(autoincrement())
+  recipeStepNumber      Int
+  recipeStepInstruction String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  idRecipe              Int
+  recipe                recipes   @relation(fields: [idRecipe], references: [idRecipe])
+}
+
+// ======================================================
+// INGREDIENTS
+// ======================================================
+model ingredients {
+  idIngredient   Int                 @id @default(autoincrement())
+  ingredientName String              @unique
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  recipeIngredients recipeIngredients[]
+}
+
+// ======================================================
+// RECIPE INGREDIENTS
+// ======================================================
+model recipeIngredients {
+  idRecipeIngredient      Int       @id @default(autoincrement())
+  recipeIngredientQuantity Float?
+  recipeIngredientUnit     String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  idRecipe                 Int
+  idIngredient             Int
+
+  recipe                   recipes     @relation(fields: [idRecipe], references: [idRecipe])
+  ingredient               ingredients @relation(fields: [idIngredient], references: [idIngredient])
+}
+
+// ======================================================
+// FAVORITES
+// ======================================================
+model favorites {
+  idFavorite  Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  idUser      Int
+  idRecipe    Int
+
+  user        users     @relation(fields: [idUser], references: [idUser])
+  recipe      recipes   @relation(fields: [idRecipe], references: [idRecipe])
+
+  @@unique([idUser, idRecipe])
+}
+
+// ======================================================
+// HISTORY
+// ======================================================
+model history {
+  idHistory      Int      @id @default(autoincrement())
+  historyViewedAt DateTime @default(now())
+
+  idUser          Int
+  idRecipe        Int
+
+  user            users   @relation(fields: [idUser], references: [idUser])
+  recipe          recipes @relation(fields: [idRecipe], references: [idRecipe])
+}
+
+// ======================================================
+// APPLIANCES
+// ======================================================
+model appliances {
+  idAppliance   Int               @id @default(autoincrement())
+  applianceName String            @unique
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  recipeAppliances recipeAppliances[]
+  userAppliances   userAppliances[]
+}
+
+// ======================================================
+// RECIPE ↔ APPLIANCES
+// ======================================================
+model recipeAppliances {
+  idRecipeAppliance Int       @id @default(autoincrement())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  idRecipe          Int
+  idAppliance       Int
+
+  recipe            recipes    @relation(fields: [idRecipe], references: [idRecipe])
+  appliance         appliances @relation(fields: [idAppliance], references: [idAppliance])
+
+  @@unique([idRecipe, idAppliance])
+}
+
+// ======================================================
+// USER ↔ APPLIANCES
+// ======================================================
+model userAppliances {
+  idUserAppliance Int       @id @default(autoincrement())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  idUser          Int
+  idAppliance     Int
+
+  user            users      @relation(fields: [idUser], references: [idUser])
+  appliance       appliances @relation(fields: [idAppliance], references: [idAppliance])
+
+  @@unique([idUser, idAppliance])
+}
+
+// ======================================================
+// TAGS
+// ======================================================
+model tags {
+  idTag     Int       @id @default(autoincrement())
+  tagName   String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  recipeTags recipeTags[]
+}
+
+// ======================================================
+// RECIPE ↔ TAGS
+// ======================================================
+model recipeTags {
+  idRecipeTag Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  idRecipe    Int
+  idTag       Int
+
+  recipe      recipes @relation(fields: [idRecipe], references: [idRecipe])
+  tag         tags    @relation(fields: [idTag], references: [idTag])
+
+  @@unique([idRecipe, idTag])
+}
+
+// ======================================================
+// RECIPE MEDIA
+// ======================================================
+model recipeMedia {
+  idRecipeMedia   Int       @id @default(autoincrement())
+  recipeMediaUrl  String
+  recipeMediaType String?   @default("image")
+  recipeMediaIsMain Boolean @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  idRecipe        Int
+  recipe          recipes @relation(fields: [idRecipe], references: [idRecipe])
+}
+
+// ======================================================
+// REVIEWS
+// ======================================================
+model reviews {
+  idReview      Int       @id @default(autoincrement())
+  reviewRating  Int
+  reviewComment String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  idUser        Int
+  idRecipe      Int
+
+  user          users   @relation(fields: [idUser], references: [idUser])
+  recipe        recipes @relation(fields: [idRecipe], references: [idRecipe])
+
+  @@unique([idUser, idRecipe])
+}
